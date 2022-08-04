@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 # check the shell
 if ! test -n "$BASH_VERSION"
 then
@@ -41,6 +43,11 @@ kernel_url="https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.17.tar.xz"
 kernel_dir="linux-5.10.17"
 syslinux_url="https://kernel.org/pub/linux/utils/boot/syslinux/6.xx/syslinux-6.03.tar.gz"
 syslinux_dir="syslinux-6.03"
+dhcpcd_url="https://roy.marples.name/downloads/dhcpcd/dhcpcd-9.4.1.tar.xz"
+dhcpcd_dir="dhcpcd-9.4.1"
+busybox_url="https://busybox.net/downloads/busybox-1.35.0.tar.bz2"
+busybox_dir="busybox-1.35.0"
+
 build_root=$(pwd)
 source_root=$(dirname $0 | xargs realpath)
 build_dir="${build_root}/linux_net_build"
@@ -60,7 +67,6 @@ fi
 pushd $build_dir > /dev/null
 
 # get sources
-cp $source_root/hello.c $build_dir
 cp $source_root/isolinux.cfg $build_dir
 if [ ! -d $kernel_dir ]
 then
@@ -72,22 +78,45 @@ then
     echo "Downloading syslinux"
     wget -qO- $syslinux_url | tar -xz
 fi
-
+if [ ! -d $dhcpcd_dir ]
+then
+    echo "Downloading dhcpcd"
+    wget -qO- $dhcpcd_url | tar -xJ
+fi
+if [ ! -d $busybox_dir ]
+then
+    echo "Downloading busybox"
+    wget -qO- $busybox_url | tar -xj
+fi
 
 # build linux
-echo "Build kernel"
-pushd $kernel_dir > /dev/null
-make mrproper
-cp $source_root/default.config .config
-make -j$(nproc)
-cp arch/x86/boot/bzImage $out_dir/isolinux/vmlinuz
-popd > /dev/null
+if [ ! -f $out_dir/isolinux/vmlinuz ]
+then
+    echo "Build kernel"
+    pushd $kernel_dir > /dev/null
+    make mrproper
+    cp $source_root/default.config .config
+    make -j$(nproc)
+    cp arch/x86/boot/bzImage $out_dir/isolinux/vmlinuz
+    popd > /dev/null
+fi 
 
 # build init and initrd
 echo "Build init"
+pushd $busybox_dir > /dev/null
+    cp $source_root/busybox.config .config
+    make -j$(nproc)
+popd > /dev/null
+
+cp $busybox_dir/busybox init/busybox
+
 pushd init > /dev/null
-gcc -static -static-libgcc $build_dir/hello.c -o init
-strip init
+strip busybox
+mkdir -p bin
+for e in $(./busybox --list);
+do
+    ln -s ../busybox ./bin/$e
+done
 find . | cpio -o -H newc | gzip - > $out_dir/isolinux/initrd.gz
 popd > /dev/null
 
@@ -107,8 +136,8 @@ mkisofs -R -l -L -D \
         -input-charset ascii \
         -no-emul-boot -boot-load-size 4 \
         -boot-info-table \
-        -V HELLO_WORLD \
+        -V NET \
         $out_dir \
-        > $iso_out_dir/hello_world.iso
+        > $iso_out_dir/net.iso
 
 popd > /dev/null

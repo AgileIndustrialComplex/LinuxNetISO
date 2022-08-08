@@ -122,18 +122,21 @@ done
 
 ln -sf bin sbin
 
-# mkdir -p etc/init.d
-# mv rcS etc/init.d
+mkdir -p etc/init.d
 
-# cat > etc/init.d/STEST01 << EOF
-# echo STEST01
-# EOF
-# cat > etc/init.d/STEST02 << EOF
-# echo STEST02
-# EOF
-# cat > etc/init.d/STEST03 << EOF
-# echo STEST03
-# EOF
+cat > etc/init.d/rcS << EOF
+#!/bin/sh
+mkdir /proc
+mount -t proc none /proc
+echo hello world
+
+while :
+do
+  sleep 1000 # loop infinitely
+done
+EOF
+
+chmod 777 etc/init.d/rcS
 
 find . | cpio -o -H newc | gzip - > $out_dir/isolinux/initrd.gz
 popd > /dev/null

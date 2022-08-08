@@ -130,10 +130,10 @@ mkdir /proc
 mount -t proc none /proc
 echo hello world
 
-while :
-do
-  sleep 1000 # loop infinitely
-done
+# while :
+# do
+#   sleep 1000 # loop infinitely
+# done
 EOF
 
 chmod 777 etc/init.d/rcS

@@ -49,20 +49,32 @@ busybox_url="https://busybox.net/downloads/busybox-1.35.0.tar.bz2"
 busybox_dir="busybox-1.35.0"
 
 build_root=$(pwd)
-source_root=$(dirname $0 | xargs realpath)
+build_root=$(realpath $build_root)
 build_dir="${build_root}/linux_net_build"
-out_dir="${build_dir}/out"
-iso_out_dir=$build_root
-
-# make build dir
+build_dir=$(realpath $build_dir)
 if [ ! -d $build_dir ]
 then
-    mkdir $build_dir
-    mkdir $build_dir/system
-    mkdir $out_dir
-    mkdir $out_dir/isolinux
+    mkdir -p $build_dir
 fi
 
+root_dir=$build_dir/root_dir
+root_dir=$(realpath $root_dir)
+if [ ! -d $root_dir ]
+then
+    mkdir -p $root_dir
+fi
+
+out_dir="${build_dir}/out"
+out_dir=$(realpath $out_dir)
+if [ ! -d $out_dir ]
+then
+    mkdir -p $out_dir/isolinux
+fi
+
+source_root=$(dirname $0 | xargs realpath)
+source_root=$(realpath $source_root)
+iso_out_dir=$build_root
+iso_out_dir=$(realpath $build_root)
 
 pushd $build_dir > /dev/null
 
@@ -102,16 +114,28 @@ then
     popd > /dev/null
 fi 
 
-# build init and initrd
-echo "Build init"
+echo "Build busybox"
 pushd $busybox_dir > /dev/null
     cp $source_root/busybox.config .config
     make -j$(nproc)
 popd > /dev/null
 
-cp $busybox_dir/busybox system/busybox
+echo "Build dhcpcd"
+pushd dhcpcd-9.4.1
+    ./configure --prefix=/                \
+            --sysconfdir=/etc            \
+            --libexecdir=/lib/dhcpcd \
+            --enable-static \
+            --dbdir=/var/lib/dhcpcd      \
+            --runstatedir=/run           \
+            --privsepuser=dhcpcd         &&
+    make
+    make DESTDIR=$root_dir install
+popd
 
-pushd system > /dev/null
+cp $busybox_dir/busybox $root_dir/busybox
+
+pushd $root_dir > /dev/null
 strip busybox
 mkdir -p bin
 mv busybox bin

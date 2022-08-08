@@ -11,6 +11,7 @@ fi
 commands=(
     realpath
     cp
+    bc
     wget    # downloads
     tar     # unpacking archives
     make    # build system
@@ -39,141 +40,34 @@ then
     exit 1
 fi
 
-kernel_url="https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.10.17.tar.xz"
-kernel_dir="linux-5.10.17"
-syslinux_url="https://kernel.org/pub/linux/utils/boot/syslinux/6.xx/syslinux-6.03.tar.gz"
-syslinux_dir="syslinux-6.03"
-dhcpcd_url="https://roy.marples.name/downloads/dhcpcd/dhcpcd-9.4.1.tar.xz"
-dhcpcd_dir="dhcpcd-9.4.1"
-busybox_url="https://busybox.net/downloads/busybox-1.35.0.tar.bz2"
-busybox_dir="busybox-1.35.0"
+run_dir=$(pwd)
+run_dir=$(realpath $run_dir)
+build_dir="${run_dir}/build"
+sources_dir="${build_dir}/sources"
+config_dir="${run_dir}/config"
+iso_dir=${run_dir}
+rootfs_dir="${build_dir}/rootfs"
+pack_dir="${build_dir}/pack"
 
-build_root=$(pwd)
-build_root=$(realpath $build_root)
-build_dir="${build_root}/linux_net_build"
-build_dir=$(realpath $build_dir)
-if [ ! -d $build_dir ]
-then
-    mkdir -p $build_dir
-fi
+mkdir -pv $build_dir
+mkdir -pv $sources_dir
+mkdir -pv $pack_dir
 
-root_dir=$build_dir/root_dir
-root_dir=$(realpath $root_dir)
-if [ ! -d $root_dir ]
-then
-    mkdir -p $root_dir
-fi
+mkdir -pv $rootfs_dir
+cp -rv $run_dir/rootfs/* $rootfs_dir
+find $rootfs_dir -name ".keep" -delete 
 
-out_dir="${build_dir}/out"
-out_dir=$(realpath $out_dir)
-if [ ! -d $out_dir ]
-then
-    mkdir -p $out_dir/isolinux
-fi
+export sources_dir config_dir pack_dir rootfs_dir
+./get_sources.sh
+./bundles/busybox.sh
+./bundles/kernel.sh
+./bundles/dhcpcd.sh
+./bundles/isolinux.sh
 
-source_root=$(dirname $0 | xargs realpath)
-source_root=$(realpath $source_root)
-iso_out_dir=$build_root
-iso_out_dir=$(realpath $build_root)
-
-pushd $build_dir > /dev/null
-
-# get sources
-cp $source_root/isolinux.cfg $build_dir
-
-if [ ! -d $kernel_dir ]
-then
-    echo "Downloading kernel"
-    wget -qO- $kernel_url | tar -xJ
-fi
-if [ ! -d $syslinux_dir ]
-then
-    echo "Downloading syslinux"
-    wget -qO- $syslinux_url | tar -xz
-fi
-if [ ! -d $dhcpcd_dir ]
-then
-    echo "Downloading dhcpcd"
-    wget -qO- $dhcpcd_url | tar -xJ
-fi
-if [ ! -d $busybox_dir ]
-then
-    echo "Downloading busybox"
-    wget -qO- $busybox_url | tar -xj
-fi
-
-# build linux
-if [ ! -f $out_dir/isolinux/vmlinuz ]
-then
-    echo "Build kernel"
-    pushd $kernel_dir > /dev/null
-    make mrproper
-    cp $source_root/default.config .config
-    make -j$(nproc)
-    cp arch/x86/boot/bzImage $out_dir/isolinux/vmlinuz
-    popd > /dev/null
-fi 
-
-echo "Build busybox"
-pushd $busybox_dir > /dev/null
-    cp $source_root/busybox.config .config
-    make -j$(nproc)
-popd > /dev/null
-
-echo "Build dhcpcd"
-pushd dhcpcd-9.4.1
-    ./configure --prefix=/                \
-            --sysconfdir=/etc            \
-            --libexecdir=/lib/dhcpcd \
-            --enable-static \
-            --dbdir=/var/lib/dhcpcd      \
-            --runstatedir=/run           \
-            --privsepuser=dhcpcd         &&
-    make
-    make DESTDIR=$root_dir install
+pushd $rootfs_dir
+    find . | cpio -o -H newc | gzip - > $pack_dir/isolinux/initrd.gz
 popd
 
-cp $busybox_dir/busybox $root_dir/busybox
-
-pushd $root_dir > /dev/null
-strip busybox
-mkdir -p bin
-mv busybox bin
-for e in $(./bin/busybox --list);
-do
-    ln -sf busybox ./bin/$e
-done
-
-ln -sf bin sbin
-
-mkdir -p etc/init.d
-
-cat > etc/init.d/rcS << EOF
-#!/bin/sh
-mkdir /proc
-mount -t proc none /proc
-echo hello world
-
-# while :
-# do
-#   sleep 1000 # loop infinitely
-# done
-EOF
-
-chmod 777 etc/init.d/rcS
-
-find . | cpio -o -H newc | gzip - > $out_dir/isolinux/initrd.gz
-popd > /dev/null
-
-# get isolinux
-pushd $syslinux_dir > /dev/null
-cp bios/core/isolinux.bin $out_dir/isolinux/isolinux.bin
-cp bios/com32/elflink/ldlinux/ldlinux.c32 $out_dir/isolinux/ldlinux.c32
-cp $build_dir/isolinux.cfg $out_dir/isolinux/isolinux.cfg
-popd > /dev/null
-
-
-# make iso
 echo "Make iso"
 mkisofs -R -l -L -D \
         -b isolinux/isolinux.bin \
@@ -182,7 +76,5 @@ mkisofs -R -l -L -D \
         -no-emul-boot -boot-load-size 4 \
         -boot-info-table \
         -V NET \
-        $out_dir \
-        > $iso_out_dir/net.iso
-
-popd > /dev/null
+        $pack_dir \
+        > $iso_dir/net.iso

@@ -58,7 +58,7 @@ iso_out_dir=$build_root
 if [ ! -d $build_dir ]
 then
     mkdir $build_dir
-    mkdir $build_dir/init
+    mkdir $build_dir/system
     mkdir $out_dir
     mkdir $out_dir/isolinux
 fi
@@ -68,6 +68,7 @@ pushd $build_dir > /dev/null
 
 # get sources
 cp $source_root/isolinux.cfg $build_dir
+
 if [ ! -d $kernel_dir ]
 then
     echo "Downloading kernel"
@@ -108,15 +109,32 @@ pushd $busybox_dir > /dev/null
     make -j$(nproc)
 popd > /dev/null
 
-cp $busybox_dir/busybox init/busybox
+cp $busybox_dir/busybox system/busybox
 
-pushd init > /dev/null
+pushd system > /dev/null
 strip busybox
 mkdir -p bin
-for e in $(./busybox --list);
+mv busybox bin
+for e in $(./bin/busybox --list);
 do
-    ln -s ../busybox ./bin/$e
+    ln -sf busybox ./bin/$e
 done
+
+ln -sf bin sbin
+
+# mkdir -p etc/init.d
+# mv rcS etc/init.d
+
+# cat > etc/init.d/STEST01 << EOF
+# echo STEST01
+# EOF
+# cat > etc/init.d/STEST02 << EOF
+# echo STEST02
+# EOF
+# cat > etc/init.d/STEST03 << EOF
+# echo STEST03
+# EOF
+
 find . | cpio -o -H newc | gzip - > $out_dir/isolinux/initrd.gz
 popd > /dev/null
 

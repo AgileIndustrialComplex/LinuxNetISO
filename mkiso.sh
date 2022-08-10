@@ -61,7 +61,7 @@ export sources_dir config_dir pack_dir rootfs_dir
 ./get_sources.sh
 ./bundles/busybox.sh
 ./bundles/kernel.sh
-#./bundles/dhcpcd.sh
+./bundles/dhcpcd.sh
 ./bundles/isolinux.sh
 
 pushd $rootfs_dir

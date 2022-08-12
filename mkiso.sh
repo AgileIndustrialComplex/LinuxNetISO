@@ -12,17 +12,17 @@ commands=(
     realpath
     cp
     bc
-    wget    # downloads
-    tar     # unpacking archives
-    make    # build system
-    gcc     # compiler
-    flex    # compile kernel
-    bison   # compile kernel
-    strip   # clear objects from executables
-    find    # list files for initramfs
-    cpio    # create initramfs archive
-    gzip    # compress initramfs
-    mkisofs # create bootable iso
+    wget
+    tar
+    make
+    gcc
+    flex
+    bison
+    strip
+    find
+    cpio
+    gzip
+    mkisofs
 )
 
 # check for existance
@@ -58,7 +58,6 @@ cp -rv $run_dir/rootfs/* $rootfs_dir
 find $rootfs_dir -name ".keep" -delete 
 
 export sources_dir config_dir pack_dir rootfs_dir
-./get_sources.sh
 ./bundles/busybox.sh
 ./bundles/kernel.sh
 ./bundles/dhcpcd.sh

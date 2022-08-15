@@ -7,7 +7,7 @@ strace_dir="strace-5.19"
 pushd $sources_dir
     if [ ! -d $strace_dir ]
     then
-        echo "Downloading kernel"
+        echo "Downloading strace"
         wget -qO- $strace_url | tar -xJ
     fi
 popd

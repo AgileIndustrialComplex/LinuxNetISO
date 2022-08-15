@@ -2,3 +2,4 @@
 
 ## TODO
 - link against uClibc
+    - build toolchain

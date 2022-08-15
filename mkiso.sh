@@ -60,7 +60,6 @@ find $rootfs_dir -name ".keep" -delete
 export sources_dir config_dir pack_dir rootfs_dir
 ./bundles/busybox.sh
 ./bundles/kernel.sh
-./bundles/dhcpcd.sh
 ./bundles/isolinux.sh
 ./bundles/strace.sh
 

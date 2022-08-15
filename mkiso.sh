@@ -62,6 +62,7 @@ export sources_dir config_dir pack_dir rootfs_dir
 ./bundles/kernel.sh
 ./bundles/dhcpcd.sh
 ./bundles/isolinux.sh
+./bundles/strace.sh
 
 pushd $rootfs_dir
     find . | cpio -o -H newc | gzip - > $pack_dir/isolinux/initrd.gz

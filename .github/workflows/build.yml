@@ -20,3 +20,9 @@ jobs:
 
       - name: Run build
         run: ./mkiso.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with: 
+          name: netiso
+          path: net.iso

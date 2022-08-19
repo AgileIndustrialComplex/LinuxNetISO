@@ -10,11 +10,14 @@ pushd $sources_dir
         wget -qO- $source_url | tar -xJ
     fi
 
-    pushd $source_dir
-        ./configure LDFLAGS='-static -pthread' --enable-mpers=check
-        make -j$(nproc)
-        strip src/strace
-        cp src/strace $rootfs_dir/bin
-    popd > /dev/null
+    if [ ! -f $rootfs_dir/bin/strace ]
+    then
+        pushd $source_dir
+            ./configure LDFLAGS='-static -pthread' --enable-mpers=check
+            make -j$(nproc)
+            strip src/strace
+            cp src/strace $rootfs_dir/bin
+        popd > /dev/null
+    fi
 popd
 

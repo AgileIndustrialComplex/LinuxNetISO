@@ -5,8 +5,3 @@ mount -t sysfs none /sys
 
 ifup -a
 udhcpc -s /usr/share/udhcpc/default.script
-
-# while :
-# do
-#   sleep 1000 # loop infinitely
-# done

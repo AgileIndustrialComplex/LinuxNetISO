@@ -58,7 +58,7 @@ cp -rv $run_dir/rootfs/* $rootfs_dir
 find $rootfs_dir -name ".keep" -delete 
 
 export sources_dir config_dir pack_dir rootfs_dir
-./bundles/busybox.sh
+./bundles/busybox_uclibc.sh
 ./bundles/kernel.sh
 ./bundles/isolinux.sh
 ./bundles/strace.sh

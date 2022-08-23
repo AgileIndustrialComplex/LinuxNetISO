@@ -1,5 +1,4 @@
 # linux_net_iso
 
 ## TODO
-- link against uClibc
-    - build toolchain
+write something here

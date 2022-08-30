@@ -22,6 +22,7 @@ commands=(
     find
     cpio
     gzip
+    bzip2
     mkisofs
 )
 

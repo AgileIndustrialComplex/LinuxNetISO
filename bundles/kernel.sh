@@ -11,7 +11,7 @@ pushd $sources_dir
     fi
 
     mkdir -pv $pack_dir/isolinux
-    if [ ! -f $pack_dir/isolinux/vmlinuz ]
+    if [ ! -f $pack_dir/isolinux/vmlinuz ] || [ $force_kernel ]
     then
         pushd $source_dir
             cp -v $config_dir/kernel.config kernel.config

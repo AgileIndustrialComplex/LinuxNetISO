@@ -41,6 +41,14 @@ then
     exit 1
 fi
 
+force_kernel=""
+for arg in "$@"
+do
+    if [ $arg = "kernel" ]; then
+        force_kernel=yes
+    fi
+done
+
 run_dir=$(pwd)
 run_dir=$(realpath $run_dir)
 build_dir="${run_dir}/build"
@@ -58,7 +66,7 @@ mkdir -pv $rootfs_dir
 cp -rv $run_dir/rootfs/* $rootfs_dir
 find $rootfs_dir -name ".keep" -delete 
 
-export sources_dir config_dir pack_dir rootfs_dir
+export sources_dir config_dir pack_dir rootfs_dir force_kernel
 ./bundles/busybox_uclibc.sh
 ./bundles/kernel.sh
 ./bundles/isolinux.sh

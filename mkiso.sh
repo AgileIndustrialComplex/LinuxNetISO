@@ -1,13 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# check the shell
-if ! test -n "$BASH_VERSION"
-then
-    echo "This script must be run using bash."
-    exit 1
-fi
-
 commands=(
     realpath
     cp

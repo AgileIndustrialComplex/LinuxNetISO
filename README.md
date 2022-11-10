@@ -29,7 +29,7 @@ Preffered VM settings:
     - contains necessary system and networking tools
     - built using bootlin uclibc toolchain
 - isolinux:
-    - creating bootable iso image
+    - used to create bootable iso image
 
 ## Project structure
 | file/directory | description |

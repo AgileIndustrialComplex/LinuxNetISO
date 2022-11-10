@@ -1,7 +1,6 @@
 # Linux Net ISO
 
-## Purpose
-Minimal bootstrapable Linux distribution with working internet.
+Minimal bootstrapable Linux distribution with working internet connection.
 
 ## Running
 In order to build ISO you will need following programs:
